@@ -1,4 +1,4 @@
-module LinAlg
+module linalg
 
     use iso_fortran_env, only: real32
 
@@ -226,4 +226,4 @@ contains
     ! end subroutine eigenmethods  ! End of eigenmethods subroutine
 
 
-end module LinAlg
+end module linalg

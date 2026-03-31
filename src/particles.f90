@@ -1,4 +1,4 @@
-module Particles
+module particles
 
     use iso_fortran_env, only: real32
 
@@ -45,4 +45,4 @@ contains
 
     end subroutine displacement
     
-end module Particles
+end module particles

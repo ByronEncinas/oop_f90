@@ -1,27 +1,38 @@
 #===============================================
-# Compiler and Flags
+# Compiler
 #===============================================
+
 FC = gfortran
-FFLAGS = -O3 -Wall -Wextra -Wpedantic -std=f2008
 
 #===============================================
 # Directories
 #===============================================
-SRC_DIR = src
-OBJ_DIR = obj
+
+SRC_DIR  = src
+APP_DIR  = app
+OBJ_DIR  = obj
 EXEC_DIR = bin
+
+#===============================================
+# Flags
+#===============================================
+
+FFLAGS = -O3 -Wall -Wextra -std=f2008 -I$(OBJ_DIR)
 
 #===============================================
 # Source Files and Objects
 #===============================================
-FSRC = $(wildcard $(SRC_DIR)/*.f90)	# Collect all .f90 files from the src/ directory
-FOBJECTS = $(patsubst $(SRC_DIR)/%.f90, $(OBJ_DIR)/%.o, $(FSRC))	# Create object file names from source
+
+FSRC     = $(wildcard $(SRC_DIR)/*.f90)
+FOBJECTS = $(patsubst $(SRC_DIR)/%.f90, $(OBJ_DIR)/%.o, $(FSRC))
+
+MAIN_SRC = $(APP_DIR)/main.f90
+MAIN_OBJ = $(OBJ_DIR)/main.o
 
 #===============================================
 # General Parameters
 #===============================================
-EXEC = $(EXEC_DIR)/fst
-
+EXEC = $(EXEC_DIR)/oopf
 #===============================================
 # Compilation rules
 #===============================================
@@ -31,14 +42,14 @@ all: $(EXEC)
 
 clean:
 	rm -rf *~ $(OBJ_DIR)/*.o $(OBJ_DIR)/*.mod *.pro *.ascii *.nat *.Gh *.o ./bin
-
 spotless: clean
 	rm -rf *~ $(OBJ_DIR)/*.o $(OBJ_DIR)/*.mod $(OBJ_DIR)/ $(EXEC)
-
-$(EXEC): $(FOBJECTS)
-	@mkdir -p $(EXEC_DIR)	# Ensure the bin directory exists
+$(EXEC): $(FOBJECTS) $(MAIN_OBJ)
+	@mkdir -p $(EXEC_DIR)
 	$(FC) $(FFLAGS) -o $@ $^ -lm
-
+$(MAIN_OBJ): $(MAIN_SRC) $(FOBJECTS)
+	@mkdir -p $(OBJ_DIR)
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(OBJ_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90
-	@mkdir -p $(dir $@)	# Ensure the obj directory structure exists
+	@mkdir -p $(dir $@)
 	$(FC) $(FFLAGS) -c $< -o $@ -J$(OBJ_DIR)

@@ -2,9 +2,9 @@ program main
 
     use iso_fortran_env, only: real32,real64,real128
 
-    !use Particles
-    use Calculus
-    use LinAlg
+    use calculus
+    use linalg
+    use particles
 
     implicit none
 
@@ -34,7 +34,6 @@ program main
     call integrator%Simpson(func, ab, "1/8", delta)
     call integrator%RK2(func, ab, delta)
     call integrator%RK4(func, ab, delta)
-    call Implicit_RK2_Method(func, ab, delta)
 
     xi = 2.0_real32  ! Starting guess
     xj = 3.0_real32
@@ -80,5 +79,13 @@ contains
         real(kind=real32), intent(in) :: x
         func =  (2.0*x + 5.0)**(1.0/3.0)
     end function func
+
+    ! dy/dx = -y,  exact solution: y = e^(-x)
+    ! integral from 0 to 5 of e^(-x) dx = 1 - e^(-5) ≈ 0.9933
+    real(kind=real32) function func(x, y)
+        real(kind=real32), intent(in) :: x, y
+        func = -y
+    end function func
+
 
 end program main
