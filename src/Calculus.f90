@@ -121,12 +121,36 @@ Subroutine Simpson_Method(self, func, ab, type, delta)
         End do
 
         self%Integral =  self%Integral + func(ab(2))*delta/3.0
-
+        write(*,'(A, F20.10)') "Simpsons Method 1/3"
         write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral
 
     else if (type == '3/8') Then
 
-        write(*,'(A, F20.10)') "Here is Extended Simpsons Method 3/8"
+        write(*,'(A, F20.10)') "Simpsons Method 3/8"
+
+
+        self%Integral = (17.0*func(ab(1)) +17.0*func(ab(2)) + &
+        & 59*func(ab(1)+delta) +59*func(ab(2)-delta) + &
+        & 43*func(ab(1)+2*delta) + 43*func(ab(2)-2*delta) + &
+        & 49*func(ab(1)+3*delta) + 49*func(ab(2)-3*delta) )*delta/48.0
+        
+        n = floor((ab(2) - ab(1))/delta) 
+
+        xi = ab(1)
+
+        Do i = 4, n-4, 1 ! i follow odd numbers  
+
+            xi = ab(1) + delta*i
+
+            self%Integral = self%Integral + func(xi)*delta
+
+        End do
+
+        write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral
+
+    else if (type == '1/8') Then
+
+        write(*,'(A, F20.10)') "Simpsons Method 1/8 (it's a lie, I didn't code this)"
 
 
         self%Integral = (17.0*func(ab(1)) +17.0*func(ab(2)) + &
@@ -223,7 +247,7 @@ Subroutine Implicit_RK2_Method(func, ab, delta)
     yi = func(xi)
 
     do i = 1, n, 1
-        print*, xi, yi
+        !print*, xi, yi
         k1 = func(xi, yi)
 
         !o = yi + k2*delta => k2 = (o - yi )/delta
@@ -294,15 +318,13 @@ Subroutine RK4_Method(self, func, ab, delta)
 
 End Subroutine RK4_Method
 
-
-
 subroutine Fixed_Point_Method(func, xi, xj, max_tolerance)
 
     integer :: i
-    real(kind=real32), intent(inout) :: max_tolerance, xi 
+    real(kind=real32), intent(inout) :: xi 
     real(kind=real32), intent(out) :: xj
     real(kind=real32), external :: func
-    real(kind=real32) :: tolerance 
+    real(kind=real32) :: tolerance, max_tolerance
 
     i = 0
 
@@ -311,6 +333,7 @@ subroutine Fixed_Point_Method(func, xi, xj, max_tolerance)
     
     do while (tolerance > max_tolerance)
         tolerance = abs((xj - xi)/xi)
+        print*,xi,xj
         xi = xj
         xj = func(xi)
         i = i + 1

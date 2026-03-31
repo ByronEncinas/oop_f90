@@ -63,7 +63,7 @@ contains
         allocate(self%M(dim,dim))
 
         if (present(zero)) then
-            self%M(:,:) = 0
+            self%M(:,:) = 0.0
         else
             ! read the matrix here
             do j = 1, dim
