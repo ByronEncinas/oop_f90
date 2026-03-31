@@ -1,47 +1,20 @@
-# FortranST (Library for Numerical Methods)
+# OOP-F90 (Library for Numerical Methods)
+
+I want to practice mathematical methods and I also don't want to forget FORTRAN (although I am married to the version after 1990). Right now, I am interested in the Calculus objects.
 
 The idea is that all the results from the method that take large population samples as input will be compatible with the input of all the Plotting functions as well.
 
+- Next in plan
+  - Implicit Euler Method
+
 - [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
-- [ ] **Next Features in Object Particle**: Electric Field, Grav Field created by it.
 
 - [x] **Object Calculus**: 
   - First Derivative, Second Derivative (Done)
   - Euler Method (Done)
   - Simpson's Method (1/3, 1/8, 3/8)
-  pending...
-  - Crank-Nicholson
-  - Finite difference approximations
-  - FFT
 
-- [ ] **Next Features in Object Calculus**: 
-  - Symplectic Integrator Feature (Predictor-Corrector, etc. for all previous methods)
-  - **Numerical Methods for ODE and PDE:**
-    - Implicit and Explicit Methods (Euler, RK4, etc.)
-    - Adaptive step-size methods (Runge-Kutta-Fehlberg, Dormand-Prince)
-    - Finite Volume Methods (FVM)
-    - Finite Element Methods (FEM)
-    - Spectral methods
-    - Stability, consistency, and convergence analysis (Von Neumann stability, CFL condition)
+References
+---
 
-- [ ] **Object Matrix**: 
-  - Initialize Levi-Civita Tensor
-  - Square matrices methods
-  - Penrose inverse matrix
-  - Gauss-Jordan Method
-  - Trace of Matrix
-  - Determinant
-  - Inverse
-  - LU Decomposition
-
-- [ ] **Linear Regression and Interpolation**: 
-  - Interpolation of N-grade polynomials
-  - Least squares fitting and regression
-
-- [ ] **Special Functions**:
-  - Logarithmic Integral
-  - Exponential Integral
-  - Error Function
-  - Elliptic Functions (all types)
-
-
+- [4th edition: Chapman, S. J. (2017). Fortran for Scientists and Engineers. McGraw-Hill Education.](https://www.mheducation.com/highered/product/fortran-for-scientists-and-engineers-chapman.html?viewOption=student)
