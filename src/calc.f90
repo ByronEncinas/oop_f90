@@ -1,7 +1,6 @@
 Module calculus
     
     use iso_fortran_env, only: real32, real64, real128
-
     implicit none
 
     public :: Fixed_Point_Method
@@ -10,7 +9,7 @@ Module calculus
 
     type, public :: Derivative
     !private
-        real(kind=real32) :: Differential
+        real(kind=real64) :: Differential
     contains
         procedure :: Diff   => Fluxion
         procedure :: SecDiff => SecondFluxion
@@ -18,14 +17,14 @@ Module calculus
 
     type, public :: Integrate
     !private
-        real(kind=real32) :: Integral
+        real(kind=real64) :: Integral
     contains
         procedure :: Euler    => Euler_Method
         procedure :: Simpson  => Simpson_Method
         procedure :: RK2      => RK2_Method         
         procedure :: RK4      => RK4_Method         
-        procedure :: ImpEuler => Implicit_Euler
-        procedure :: AdpEuler => Adaptive_Euler
+        procedure :: ImpRKO2  => Implicit_RK2
+        procedure :: AdpRKO4  => Adaptive_RK4
     end type Integrate
 
 contains
@@ -33,10 +32,10 @@ contains
 Subroutine Fluxion(self, func, x, delta, dydx)
 
     class(Derivative), intent(in out) :: self
-    real(kind=real32), intent(in) :: delta
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in) :: x
-    real(kind=real32), intent(in out) :: dydx
+    real(kind=real64), intent(in) :: delta
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in) :: x
+    real(kind=real64), intent(in out) :: dydx
 
     dydx = (func(x + delta) - func(x))/delta
     
@@ -46,10 +45,10 @@ End Subroutine Fluxion
 Subroutine SecondFluxion(self,func, x, delta, d2ydx2) 
     
     class(Derivative), intent(in out) :: self
-    real(kind=real32), intent(in) :: delta
-    real(kind=real32), intent(in) :: x
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in out) :: d2ydx2
+    real(kind=real64), intent(in) :: delta
+    real(kind=real64), intent(in) :: x
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in out) :: d2ydx2
 
     d2ydx2 =  (func(x + delta) + func(x - delta)  - 2*func(x))/(delta**2)
 
@@ -58,17 +57,17 @@ End Subroutine SecondFluxion
 Subroutine Euler_Method(self, func, ab, delta)
 
     class(Integrate), intent(in out) :: self
-    integer(kind=real32):: i, n
-    real(kind=real32), intent(inout) :: delta
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in), dimension(2) :: ab
-    real(kind=real32):: xi
+    integer(kind=real64):: i, n
+    real(kind=real64), intent(inout) :: delta
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in), dimension(2) :: ab
+    real(kind=real64):: xi
 
     write(*,*) ""
     write(*,'(A)') "Here is Euler Method"
 
     if (delta <= 0) Then
-        delta = 1.0e-4_real32
+        delta = 1.0e-4_real64
     endif
 
     self%Integral = 0
@@ -181,23 +180,23 @@ Subroutine RK2_Method(self, func, ab, delta, alpha_input)
 
     class(Integrate), intent(in out) :: self
     integer :: i, n
-    real(kind=real32), intent(inout) :: delta
-    real(kind=real32), optional, intent(in) :: alpha_input
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in), dimension(2) :: ab
-    real(kind=real32) :: xi, yi, k1, k2, alpha
+    real(kind=real64), intent(inout) :: delta
+    real(kind=real64), optional, intent(in) :: alpha_input
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in), dimension(2) :: ab
+    real(kind=real64) :: xi, yi, k1, k2, alpha
 
     if (.not. present(alpha_input)) then
         ! Heun has alpha = 1
         ! Ralston method has alpha = 2/3
         ! Midpoint method has alpha = 1/2
-        alpha = 1.0_real32
+        alpha = 1.0_real64
     else
         alpha = alpha_input
     endif
 
-    if (delta <= 0.0_real32) then
-        delta = 1.0e-4_real32
+    if (delta <= 0.0_real64) then
+        delta = 1.0e-4_real64
     endif
 
     self%Integral = func(ab(1))
@@ -217,23 +216,23 @@ Subroutine RK2_Method(self, func, ab, delta, alpha_input)
 
 End Subroutine RK2_Method
 
-Subroutine RK4_Method(self, func, ab, delta)
+Subroutine RK4_Method(self, func, ab, delta, y0)
 
     class(Integrate), intent(in out) :: self
     integer :: i, n
-    real(kind=real32), intent(inout) :: delta
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in), dimension(2) :: ab
-    real(kind=real32) :: xi, yi, k1, k2, k3, k4
+    real(kind=real64), intent(inout) :: delta, y0
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in), dimension(2) :: ab
+    real(kind=real64) :: xi, yi, k1, k2, k3, k4
 
-    if (delta <= 0.0_real32) then
-        delta = 1.0e-4_real32
+    if (delta <= 0.0_real64) then
+        delta = 1.0e-4_real64
     endif
 
     self%Integral = func(ab(1))
     n = floor((ab(2) - ab(1)) / delta)
     xi = ab(1)
-    yi = self%Integral
+    yi = y0
 
     do i = 1, n, 1
         k1 = func(xi, yi)
@@ -252,10 +251,10 @@ End Subroutine RK4_Method
 subroutine Fixed_Point_Method(func, xi, xj, max_tolerance)
 
     integer :: i
-    real(kind=real32), intent(inout) :: xi 
-    real(kind=real32), intent(out) :: xj
-    real(kind=real32), external :: func
-    real(kind=real32) :: tolerance, max_tolerance
+    real(kind=real64), intent(inout) :: xi 
+    real(kind=real64), intent(out) :: xj
+    real(kind=real64), external :: func
+    real(kind=real64) :: tolerance, max_tolerance
 
     i = 0
 
@@ -275,14 +274,14 @@ subroutine NewtonRapson(func, xi, xj, max_tolerance, delta)
 
     type(Derivative):: Flux
     integer :: i
-    real(kind=real32), intent(inout) :: max_tolerance, xi 
-    real(kind=real32), intent(out) :: xj
-    real(kind=real32), external :: func
-    real(kind=real32), optional, intent(in out) :: delta
-    real(kind=real32) :: dfdx, tolerance ! j = i+1
+    real(kind=real64), intent(inout) :: max_tolerance, xi 
+    real(kind=real64), intent(out) :: xj
+    real(kind=real64), external :: func
+    real(kind=real64), optional, intent(in out) :: delta
+    real(kind=real64) :: dfdx, tolerance ! j = i+1
 
-    if (delta <= 0.0_real32) then
-        delta = 1.0e-4_real32
+    if (delta <= 0.0_real64) then
+        delta = 1.0e-4_real64
     endif
 
     i = 0
@@ -294,7 +293,7 @@ subroutine NewtonRapson(func, xi, xj, max_tolerance, delta)
         call Flux%Diff(func, xi, delta, dfdx)
         xj = xi + func(xi)/dfdx
         tolerance = abs(xj - xi)
-        if (dfdx < 1.0e-10_real32) then
+        if (dfdx < 1.0e-10_real64) then
             print *, "derivative too small, stopping iteration"
             return
         endif
@@ -304,41 +303,39 @@ subroutine NewtonRapson(func, xi, xj, max_tolerance, delta)
 
 End subroutine NewtonRapson
 
-Subroutine Implicit_Euler(self, func, ab, delta, x0, y0)
+Subroutine Implicit_RK2(self, func, ab, delta, y0)
     class(Integrate), intent(in out) :: self
     ! Implicit Euler
 
     integer :: i, n
-    real(kind=real32), intent(inout) :: delta, x0, y0
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in), dimension(2) :: ab
-    real(kind=real32) :: tolerance = 1.0e-2_real32
-    real(kind=real32) :: xi, yi, k1, k2, o
+    real(kind=real64), intent(inout) :: delta, y0
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in), dimension(2) :: ab
+    real(kind=real64) :: tolerance = 1.0e-2_real32
+    real(kind=real64) :: xi, yi, k1, k2, o
 
-    if (delta == 0.0_real32) then
-        delta = 1.0e-6_real32
+    if (delta == 0.0_real64) then
+        delta = 1.0e-6_real64
     endif
 
     !! Aproximate number of steps
     n = floor((ab(2) - ab(1)) / delta)
 
     !! Initial Values
-    xi = x0
+    xi = ab(1)
     yi = y0
 
     !! initialize integral result
 
-    self%Integral = 0.0_real32
+    self%Integral = 0.0
     do i = 1, n, 1
 
         k1 = func(xi, yi)
 
         !o = yi + k2*delta => k2 = (o - yi )/delta
-
-	!! solves algebraic equation
 	o = xi + delta
-        k2 = imp_euler_fixed_point(func, o, yi, tolerance, delta)
 
+        k2 = imp_euler_fixed_point(func, o, yi, tolerance, delta)
         k2 = (k2 - yi)/delta
 
         xi = ab(1) + i * delta
@@ -350,17 +347,17 @@ Subroutine Implicit_Euler(self, func, ab, delta, x0, y0)
     contains
 
     function imp_euler_fixed_point(func, xi, yi, max_tolerance, delta) result(yj)
-        real(kind=real32), intent(inout) :: xi, yi, delta
-        real(kind=real32), intent(in) :: max_tolerance
-        real(kind=real32), external :: func
-        real(kind=real32) :: tolerance
-        real(kind=real32) :: yj, res0, aux_yi
+        real(kind=real64), intent(inout) :: xi, yi, delta
+        real(kind=real64), intent(in) :: max_tolerance
+        real(kind=real64), external :: func
+        real(kind=real64) :: tolerance
+        real(kind=real64) :: yj, res0, aux_yi
         integer :: i
 
 	aux_yi = yi
 
-	if (aux_yi == 0.0_real32) then
-	    aux_yi = 1.0e-6_real32
+	if (aux_yi == 0.0_real64) then
+	    aux_yi = 1.0e-6_real64
 	endif
 
 	res0 = aux_yi
@@ -379,19 +376,64 @@ Subroutine Implicit_Euler(self, func, ab, delta, x0, y0)
 
     end function imp_euler_fixed_point
 
-End Subroutine Implicit_Euler
+End Subroutine Implicit_RK2
 
-Subroutine Adaptive_Euler(self, func, ab, delta, x0, y0)
+Subroutine Adaptive_RK4(self, func, ab, delta, y0)
 
     class(Integrate), intent(in out) :: self
-
     integer :: i, n
-    real(kind=real32), intent(inout) :: delta, x0, y0
-    real(kind=real32), external :: func
-    real(kind=real32), intent(in), dimension(2) :: ab
-    real(kind=real32) :: tolerance = 1.0e-2_real32
-    real(kind=real32) :: xi, yi, k1, k2, o
+    real(kind=real64), intent(inout) :: delta
+    real(kind=real64), intent(in) :: y0
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in), dimension(2) :: ab
+    real(kind=real64) :: xi, yi, k1, k2, k3, k4, yj, xj
+    real(kind=real64) :: ystep, yhalf, xhalf, xstep
+    real(kind=real64) :: variation
+    real(kind=real64) :: epsilon = 1.0e-6_real64
+    real(kind=real64) :: q = 1.0
 
-End Subroutine Adaptive_Euler
+    self%Integral = 0
+    n = floor((ab(2) - ab(1)) / delta)
+    xi = ab(1)
+    yi = y0
+
+    do i = 1, n, 1
+	
+        k1 = func(xi, yi)
+        k2 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k1)
+        k3 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k2)
+        k4 = func(xi + 0.5 * delta, yi + 0.5 * delta * k3)
+
+        xhalf = xi + delta/2
+	yhalf = yi + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+
+        k1 = func(xhalf, yhalf)
+        k2 = func(xhalf + 0.5 * 0.5 * delta, yhalf + 0.5 * 0.5 * delta * k1)
+        k3 = func(xhalf + 0.5 * 0.5 * delta, yhalf + 0.5 * 0.5 * delta * k2)
+        k4 = func(xhalf + 0.5 * delta, yhalf + 0.5 * delta * k3)
+
+	!!xhalf = xi + delta/2
+        yhalf = yhalf + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+
+        k1 = func(xi, yi)
+        k2 = func(xi + 0.5 * delta, yi + 0.5 * delta * k1)
+        k3 = func(xi + 0.5 * delta, yi + 0.5 * delta * k2)
+        k4 = func(xi + delta, yi + delta * k3)
+
+        !!xstep = xi + delta
+	ystep = yi + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+
+	variation = (yhalf - ystep)/15
+        xi = xi + delta
+	yi = yhalf + variation
+
+	!q = 0.9_real64*(epsilon / (variation))**(0.2_real64)	
+	!q = min(5.0_real64, max(q, 0.1_real64))	
+
+        self%Integral = self%integral +  yi*delta
+
+    end do
+
+End Subroutine Adaptive_RK4
 
 End Module calculus

@@ -8,31 +8,30 @@ program main
     implicit none
 
     type(Integrate) :: integrator
-    real(kind=real32) :: delta, x0, y0
-    real(kind=real32), dimension(2) :: ab
+    real(kind=real64) :: delta, x0, y0
+    real(kind=real64), dimension(2) :: ab
 
-    ! Interval [0, 5], step size 0.1
-    ab(1) = 0.0_real32
-    ab(2) = 5.0_real32
-    delta  = 1.0e-4_real32
+    ab(1) = 0.0_real64
+    ab(2) = 5.0_real64
+    delta  = 1.0e-6_real64
 
-    ! Initial condition: y(0) = 1
-    x0 = 0.0_real32
-    y0 = 1.0_real32
+    y0 = 1.0_real64
 
-    ! Call the implicit euler method through the class
-    call integrator%ImpEuler(func, ab, delta, x0, y0)
+    call integrator%ImpRKO2(func, ab, delta, y0)
+    call integrator%AdpRKO4(func, ab, delta, y0)
 
-    ! Print result
-    print *, "Numerical Integral = ", integrator%Integral
-    print *, "Exact Integral     = ", 1.0_real32 - exp(-5.0_real32)
+    print *, "Implicit Runge Kutta O2 Integral  = ", integrator%Integral
+
+    print *, "Adaptive Runge Kutta O2 Integral  = ", integrator%Integral
+
+    print *, "Exact Integral                    = ", 1.0_real64 - exp(-5.0_real64)
 
 contains
 
     ! dy/dx = -y,  exact solution: y = e^(-x)
     ! integral from 0 to 5 of e^(-x) dx = 1 - e^(-5) ≈ 0.9933
-    real(kind=real32) function func(x, y)
-        real(kind=real32), intent(in) :: x, y
+    real(kind=real64) function func(x, y)
+        real(kind=real64), intent(in) :: x, y
         func = -y
     end function func
 

@@ -1,6 +1,6 @@
 module linalg
 
-    use iso_fortran_env, only: real32
+    use iso_fortran_env, only: real64
 
     implicit none
 
@@ -9,7 +9,7 @@ module linalg
     type, public :: Matrix
     !private
         integer :: dim
-        real(kind=real32), allocatable:: M(:,:)
+        real(kind=real64), allocatable:: M(:,:)
         character(len=20):: data = "Square Matrices ONLY"
     contains
         procedure :: init
@@ -23,8 +23,8 @@ module linalg
 
     type, public :: Vector
     !private
-        real(kind=real32):: vector(3)
-        real(kind=real32):: norm
+        real(kind=real64):: vector(3)
+        real(kind=real64):: norm
         character(len=20):: data = "Vector in Space"
     contains
         procedure :: set   => set
@@ -93,10 +93,10 @@ contains
 
     recursive function recursive_determinant(M, dim) result(deter)
         integer :: i, j, dim
-        real(kind=real32) :: deter
-        real(kind=real32) :: minor_deter
-        real(kind=real32), dimension(:,:), intent(in) :: M 
-        real(kind=real32), allocatable:: cof(:,:)
+        real(kind=real64) :: deter
+        real(kind=real64) :: minor_deter
+        real(kind=real64), dimension(:,:), intent(in) :: M 
+        real(kind=real64), allocatable:: cof(:,:)
 
         if (dim == 1) then
             deter = M(1,1)
@@ -110,7 +110,7 @@ contains
 
         allocate(cof(dim-1,dim-1))
 
-        deter = 0.0_real32
+        deter = 0.0_real64
 
         do j = 1, dim ! expanding on row 1 
             call get_minor(M, dim, j, cof)
@@ -124,10 +124,9 @@ contains
 
     subroutine get_minor(M, dim, j, cof)
         integer, intent(in) :: dim, j
-        real(kind=real32), dimension(:,:), intent(in) :: M
-        real(kind=real32), dimension(:,:), intent(out) :: cof
+        real(kind=real64), dimension(:,:), intent(in) :: M
+        real(kind=real64), dimension(:,:), intent(out) :: cof
         integer :: i, k
-        print*, dim
         
         ! removing row 1 and column j
         do i = 1, dim
@@ -152,7 +151,7 @@ contains
 
     subroutine determinant(self, deter)
         class(Matrix), intent(in) :: self
-        real(kind=real32), intent(out) :: deter
+        real(kind=real64), intent(out) :: deter
         deter = recursive_determinant(self%M, self%dim)
     end subroutine determinant
 
