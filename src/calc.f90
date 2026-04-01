@@ -397,7 +397,7 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
     xi = ab(1)
     yi = y0
 
-    do i = 1, n, 1
+    do while (xi <= ab(2))
 	
         k1 = func(xi, yi)
         k2 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k1)
@@ -423,14 +423,23 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
         !!xstep = xi + delta
 	ystep = yi + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
 
-	variation = (yhalf - ystep)/15
-        xi = xi + delta
-	yi = yhalf + variation
+	variation = (yhalf - ystep)
 
-	!q = 0.9_real64*(epsilon / (variation))**(0.2_real64)	
-	!q = min(5.0_real64, max(q, 0.1_real64))	
+	q = 0.9_real64*(epsilon / abs(variation))**(0.25_real64)	
+	q = min(5.0_real64, max(q, 0.1_real64))	
+
+	if (abs(variation) > epsilon) then
+		delta = q*delta
+		cycle
+	endif
+
+        xi = xi + delta
+        yi = yhalf + variation/15.0_real64
+
+	!print*, epsilon, delta
 
         self%Integral = self%integral +  yi*delta
+        delta = q*delta
 
     end do
 

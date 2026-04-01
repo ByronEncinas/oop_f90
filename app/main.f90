@@ -10,21 +10,28 @@ program main
     type(Integrate) :: integrator
     real(kind=real64) :: delta, x0, y0
     real(kind=real64), dimension(2) :: ab
-
-    ab(1) = 0.0_real64
-    ab(2) = 5.0_real64
-    delta  = 1.0e-6_real64
+    real(kind=real64) :: t, C
+    real(kind=real64) :: y_analytical
 
     y0 = 1.0_real64
+    C  = y0 + 1.0_real64/1000001.0_real64
 
-    call integrator%ImpRKO2(func, ab, delta, y0)
-    call integrator%AdpRKO4(func, ab, delta, y0)
+    ab(1) = 0.0_real64
+    ab(2) = 1.0_real64
+    delta = 1.0e-5_real64
+
+    t = ab(2)
+
+    y_analytical = sin(1.0_real64)-sin(0.0_real64)
+
+    call integrator%ImpRKO2(stiff, ab, delta, y0)
+    call integrator%AdpRKO4(stiff, ab, delta, y0)
 
     print *, "Implicit Runge Kutta O2 Integral  = ", integrator%Integral
 
     print *, "Adaptive Runge Kutta O2 Integral  = ", integrator%Integral
 
-    print *, "Exact Integral                    = ", 1.0_real64 - exp(-5.0_real64)
+    print *, "Exact Integral                    = ", y_analytical
 
 contains
 
@@ -34,5 +41,13 @@ contains
         real(kind=real64), intent(in) :: x, y
         func = -y
     end function func
+
+
+! dy/dx = -1000*y + sin(x)
+
+    real(kind=real64) function stiff(x, y)
+        real(kind=real64), intent(in) :: x, y
+	stiff = -100.0_real64 * (y - cos(x)) - sin(x)
+    end function stiff
 
 end program main

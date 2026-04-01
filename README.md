@@ -5,7 +5,7 @@ I want to practice mathematical methods and I also don't want to forget FORTRAN 
 The idea is that all the results from the method that take large population samples as input will be compatible with the input of all the Plotting functions as well.
 
 - Next in plan
-  - [ ] Adaptive Runge Kutta Order 2 Method
+  - [ ] System of coupled differential equations
   - [ ] Migrate to fpm: this implies avoiding `external :: func`, and implementing abstract interfaces.
 
 - [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
@@ -14,7 +14,8 @@ The idea is that all the results from the method that take large population samp
   - [x] First Derivative, Second Derivative (Done)
   - [x] Euler Method (Done)
   - [x] Simpson's Method (1/3, 1/8, 3/8)
-  - [x] Implicit Runge Kutta Order 4 Method
+  - [x] Implicit Runge Kutta Order 2 Method
+  - [x] Adaptive Runge Kutta Order 4 Method
 
 References
 ---
