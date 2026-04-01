@@ -5,14 +5,14 @@ I want to practice mathematical methods and I also don't want to forget FORTRAN 
 The idea is that all the results from the method that take large population samples as input will be compatible with the input of all the Plotting functions as well.
 
 - Next in plan
-  - [] Adaptive Euler Method
+  - [ ] Adaptive Euler Method
 
 - [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
 
 - [x] **Object Calculus**: 
-  - First Derivative, Second Derivative (Done)
-  - Euler Method (Done)
-  - Simpson's Method (1/3, 1/8, 3/8)
+  - [x] First Derivative, Second Derivative (Done)
+  - [x] Euler Method (Done)
+  - [x} Simpson's Method (1/3, 1/8, 3/8)
   - [x] Implicit Euler Method
 References
 ---
