@@ -5,7 +5,6 @@ Module calculus
     implicit none
 
     public :: Fixed_Point_Method
-    public :: Implicit_Euler
 
     private
 
@@ -21,11 +20,12 @@ Module calculus
     !private
         real(kind=real32) :: Integral
     contains
-        procedure :: Euler   => Euler_Method
-        procedure :: Simpson => Simpson_Method
-        procedure :: RK2 => RK2_Method          ! explicit
-        procedure :: RK4 => RK4_Method          ! explicit
-        procedure :: ImpEuler => Implicit_Euler ! implicit
+        procedure :: Euler    => Euler_Method
+        procedure :: Simpson  => Simpson_Method
+        procedure :: RK2      => RK2_Method         
+        procedure :: RK4      => RK4_Method         
+        procedure :: ImpEuler => Implicit_Euler
+        procedure :: AdpEuler => Adaptive_Euler
     end type Integrate
 
 contains
@@ -380,5 +380,18 @@ Subroutine Implicit_Euler(self, func, ab, delta, x0, y0)
     end function imp_euler_fixed_point
 
 End Subroutine Implicit_Euler
+
+Subroutine Adaptive_Euler(self, func, ab, delta, x0, y0)
+
+    class(Integrate), intent(in out) :: self
+
+    integer :: i, n
+    real(kind=real32), intent(inout) :: delta, x0, y0
+    real(kind=real32), external :: func
+    real(kind=real32), intent(in), dimension(2) :: ab
+    real(kind=real32) :: tolerance = 1.0e-2_real32
+    real(kind=real32) :: xi, yi, k1, k2, o
+
+End Subroutine Adaptive_Euler
 
 End Module calculus

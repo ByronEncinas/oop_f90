@@ -6,6 +6,7 @@ The idea is that all the results from the method that take large population samp
 
 - Next in plan
   - [ ] Adaptive Euler Method
+  - [ ] Migrate to fpm: this implies avoiding `external :: func`, and implementing abstract interfaces.
 
 - [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
 
