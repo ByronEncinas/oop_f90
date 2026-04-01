@@ -17,7 +17,7 @@ EXEC_DIR = bin
 # Flags
 #===============================================
 
-FFLAGS = -O3 -Wall -Wextra -std=f2008 -I$(OBJ_DIR)
+FFLAGS = -O3 -Wall -Wextra -Wpedantic -std=f2008 -I$(OBJ_DIR)
 
 #===============================================
 # Source Files and Objects
@@ -32,7 +32,9 @@ MAIN_OBJ = $(OBJ_DIR)/main.o
 #===============================================
 # General Parameters
 #===============================================
+
 EXEC = $(EXEC_DIR)/oopf
+
 #===============================================
 # Compilation rules
 #===============================================
