@@ -20,6 +20,7 @@ module particles
         !procedure :: gfield => gravitational_field
     end type Particle
 
+    public :: three_body
 
 contains
     subroutine init(self, name, mass, charge, position, velocity)
@@ -46,5 +47,14 @@ contains
         displacement_vector = new_position - self%position
 
     end subroutine displacement
+
+    subroutine three_body(interaction, p1, p2, p3, tf)
+
+        class(Particle), intent(in out) :: p1, p2, p3
+        real(kind=real64), intent(in) :: tf
+        real(kind=real64), external :: interaction
+	
+
+    end subroutine three_body
     
 end module particles

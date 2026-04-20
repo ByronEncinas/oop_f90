@@ -27,6 +27,8 @@ Module calculus
         procedure :: AdpRKO4  => Adaptive_RK4
     end type Integrate
 
+    public :: nbody
+
 contains
 
 Subroutine Fluxion(self, func, x, delta, dydx)
@@ -444,5 +446,19 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
     end do
 
 End Subroutine Adaptive_RK4
+
+Subroutine nbody(func, ab, delta, s, tf)
+
+        real(real64), intent(in), dimension(12) :: s
+        real(real64), intent(in), dimension(2) :: ab
+        real(real64), intent(in) :: delta, tf
+	real(kind=real64) :: x1, y1, x2, y2, x3, y3
+        real(kind=real64) :: vx1, vy1, vx2, vy2, vx3, vy3
+        real(real64), external :: func
+	!! i just need a way to take on the func as realiably as possible
+
+
+
+End Subroutine nbody
 
 End Module calculus
