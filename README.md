@@ -5,7 +5,9 @@ I want to practice mathematical methods and I also don't want to forget FORTRAN 
 The idea is that all the results from the method that take large population samples as input will be compatible with the input of all the Plotting functions as well.
 
 - Next in plan
-  - [ ] System of coupled differential equations
+
+  - [ ] Make obj%integral be dynamically allocatable, to store all the curve of F(x)
+  - [ ] System of coupled differential equations (will make a wrapper around odepack, why reinventing the wheel, air?)
   - [ ] Migrate to fpm: this implies avoiding `external :: func`, and implementing abstract interfaces.
 
 - [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
