@@ -1,9 +1,7 @@
 program main
 
     use iso_fortran_env, only: real32,real64,real128
-    use calculus
-    use linalg
-    use particles
+    use oopf
 
     implicit none
 
@@ -22,16 +20,11 @@ program main
 
     t = ab(2)
 
-    y_analytical = sin(1.0_real64)-sin(0.0_real64)
-
     call integrator%ImpRKO2(stiff, ab, delta, y0)
     call integrator%AdpRKO4(stiff, ab, delta, y0)
 
     print *, "Implicit Runge Kutta O2 Integral  = ", integrator%Integral
-
     print *, "Adaptive Runge Kutta O2 Integral  = ", integrator%Integral
-
-    print *, "Exact Integral                    = ", y_analytical
 
 contains
 
