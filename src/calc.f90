@@ -1,7 +1,6 @@
 Module calculus
 
     use iso_fortran_env, only: real32, real64, real128
-    use particles
 
     implicit none
 
