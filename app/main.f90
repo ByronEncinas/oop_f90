@@ -5,26 +5,36 @@ program main
 
     implicit none
 
-    type(Integrate) :: integrator
+    type(Integrate) :: sol
     real(kind=real64) :: delta, x0, y0
     real(kind=real64), dimension(2) :: ab
     real(kind=real64) :: t, C
+    integer :: nm
     real(kind=real64) :: y_analytical
+
 
     y0 = 1.0_real64
     C  = y0 + 1.0_real64/1000001.0_real64
 
     ab(1) = 0.0_real64
     ab(2) = 1.0_real64
-    delta = 1.0e-5_real64
+    delta = 1.0e-4_real64
 
     t = ab(2)
 
-    call integrator%ImpRKO2(stiff, ab, delta, y0)
-    call integrator%AdpRKO4(stiff, ab, delta, y0)
+    call sol%ImpRKO2(stiff, ab, delta, y0)
 
-    print *, "Implicit Runge Kutta O2 Integral  = ", integrator%Integral
-    print *, "Adaptive Runge Kutta O2 Integral  = ", integrator%Integral
+    nm = size(sol%Integral)
+    print*, "Array Size: ", size(sol%Integral)
+    print *, "Implicit Runge Kutta O2 Integral  = ", sol%Integral(nm)
+    deallocate(sol%Integral)
+
+    call sol%AdpRKO4(stiff, ab, delta, y0)
+
+    nm = size(sol%Integral)
+    print*, "Array Size: ", size(sol%Integral)
+    print *, "Adaptive Runge Kutta O2 Integral  = ", sol%Integral(nm)
+    deallocate(sol%Integral)
 
 contains
 

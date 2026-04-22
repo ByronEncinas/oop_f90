@@ -6,9 +6,8 @@ The idea is that all the results from the method that take large population samp
 
 - Next in plan
 
-  - [ ] Make obj%integral be dynamically allocatable, to store all the curve of F(x)
-  - [ ] System of coupled differential equations (will make a wrapper around odepack, why reinventing the wheel, air?)
-  - [ ] Migrate to fpm: this implies avoiding `external :: func`, and implementing abstract interfaces.
+  - [ ] Wrap contents of src/legacy (and odepack functions) into an static function within src/calc.f90
+  - [ ] Store all domain of integration in obj%integral as array
 
 - [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
 

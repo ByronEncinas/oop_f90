@@ -1,9 +1,10 @@
 Module calculus
-    
+
     use iso_fortran_env, only: real32, real64, real128
     implicit none
 
     public :: Fixed_Point_Method
+    public :: nbody
 
     private
 
@@ -11,13 +12,13 @@ Module calculus
     !private
         real(kind=real64) :: Differential
     contains
-        procedure :: Diff   => Fluxion
-        procedure :: SecDiff => SecondFluxion
+        procedure :: Diff   => Deriv
+        procedure :: SecDiff => SecDeriv
     end type Derivative
 
     type, public :: Integrate
     !private
-        real(kind=real64) :: Integral
+        real(kind=real64), dimension(:), allocatable :: Integral
     contains
         procedure :: Euler    => Euler_Method
         procedure :: Simpson  => Simpson_Method
@@ -27,12 +28,10 @@ Module calculus
         procedure :: AdpRKO4  => Adaptive_RK4
     end type Integrate
 
-    public :: nbody
-
 contains
 
-Subroutine Fluxion(self, func, x, delta, dydx)
-
+Subroutine Deriv(self, func, x, delta, dydx)
+    !! func must be a function of x and y with y as optional
     class(Derivative), intent(in out) :: self
     real(kind=real64), intent(in) :: delta
     real(kind=real64), external :: func
@@ -41,10 +40,9 @@ Subroutine Fluxion(self, func, x, delta, dydx)
 
     dydx = (func(x + delta) - func(x))/delta
     
-End Subroutine Fluxion
+End Subroutine Deriv
 
-
-Subroutine SecondFluxion(self,func, x, delta, d2ydx2) 
+Subroutine SecDeriv(self,func, x, delta, d2ydx2) 
     
     class(Derivative), intent(in out) :: self
     real(kind=real64), intent(in) :: delta
@@ -54,12 +52,12 @@ Subroutine SecondFluxion(self,func, x, delta, d2ydx2)
 
     d2ydx2 =  (func(x + delta) + func(x - delta)  - 2*func(x))/(delta**2)
 
-End Subroutine SecondFluxion
+End Subroutine SecDeriv
 
 Subroutine Euler_Method(self, func, ab, delta)
 
     class(Integrate), intent(in out) :: self
-    integer(kind=real64):: i, n
+    integer:: i, n
     real(kind=real64), intent(inout) :: delta
     real(kind=real64), external :: func
     real(kind=real64), intent(in), dimension(2) :: ab
@@ -72,109 +70,115 @@ Subroutine Euler_Method(self, func, ab, delta)
         delta = 1.0e-4_real64
     endif
 
-    self%Integral = 0
     n = floor((ab(2) - ab(1))/delta) 
+
+    allocate(self%Integral(n))
     
     write(*,'(A, I0)') "Iteration: ",n
 
-    Do i = 1, n, 1 ! for midpoints
+    self%Integral(1) = func(ab(1))*delta
 
-        xi = ab(1) + i*delta
-        !write(*,*) self%Integral
-        self%Integral = self%Integral + func(xi)*delta
+    xi = ab(1) + delta
+
+    Do i = 2, n, 1 ! for midpoints
+
+        self%Integral(i) = self%Integral(i-1) + func(xi)*delta
+        xi = xi + delta
     
     End do
 
-    write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral
+    !!write(*,'(A, F20.10)') "Numerical Integration: ", self%Integral(n)
 
 End Subroutine Euler_Method
 
 Subroutine Simpson_Method(self, func, ab, type, delta)
     
     class(Integrate), intent(in out) :: self
-    integer:: i,j,k, n
-    real, optional, intent(inout) :: delta
+    integer:: i=0,j=0,k=0, n
+    real(real64), intent(inout) :: delta
     character(len=3), intent(in) :: type ! options: 1/3, 1/8, 3/8
-    real, external :: func
-    real, intent(in), dimension(2):: ab
-    real:: xi, xj, xk
-
-    i = 0
-    j = 0
-    k = 0
-    if (type == '1/3') Then
+    real(real64), external :: func
+    real(real64), intent(in), dimension(2):: ab
+    real(real64):: xi, xj, xk
+    
+    if (type == '1/3') Then !! <---
 
         write(*,'(A, F20.10)') "Here is Simpsons Method 1/3"
 
-        self%Integral = func(ab(1))*delta/3.0
-        n = floor((ab(2) - ab(1))/delta/2) 
+        n = floor((ab(2) - ab(1))/(delta*2)) 
+
+        allocate(self%Integral(n))
+
+        self%Integral(1) = func(ab(1))*delta/3.0 !! f(x_0)
+
         write(*,'(I0)') n
 
-        Do i = 1, n, 1 ! i follow odd numbers  
+	xi = ab(1)
+        xj = ab(1)
+        xk = ab(1)
+	i = 1
+        j = 2*i-1
+        k = 2*i
+        xj = xj + delta*j ! odds
+        xk = xk + delta*k ! even
+
+        Do i = 2, n-1, 1   
+
+	    self%Integral(i) = self%Integral(i-1) &
+			+ 4*func( xj )*delta/3.0 & !! f(x_(2*i-1))
+			+ 2*func( xk )*delta/3.0   !! f(x_(2*i)) 
             j = 2*i-1
             k = 2*i
-
-            xi = ab(1) + delta*i
             xj = ab(1) + delta*j ! odds
             xk = ab(1) + delta*k ! even
 
-            self%Integral = self%Integral + 4*func( xj )*delta/3.0 + 2*func( xk )*delta/3.0
-
         End do
 
-        self%Integral =  self%Integral + func(ab(2))*delta/3.0
-        write(*,'(A, F20.10)') "Simpsons Method 1/3"
-        write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral
+	self%Integral(n) = self%Integral(n-1)                 &
+	    + 4*func(xj)*delta/3.0                            &  ! 4f(x_5)
+	    + 2*func(xk)*delta/3.0                            &  ! 2f(x_6)
+	    + 4*func(ab(1) + (2*n-1)*delta)*delta/3.0         &  ! 4f(x_7)
+	    + func(ab(2))*delta/3.0    
 
-    else if (type == '3/8') Then
+	write(*,'(A)') "Here is Simpsons Method 1/3"
+        write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral(n)
 
-        write(*,'(A, F20.10)') "Simpsons Method 3/8"
+    else if (type == '3/8') Then !! <---
 
+        write(*,'(A, F20.10)') "Here is Simpsons Method 3/8"
 
-        self%Integral = (17.0*func(ab(1)) +17.0*func(ab(2)) + &
-        & 59*func(ab(1)+delta) +59*func(ab(2)-delta) + &
-        & 43*func(ab(1)+2*delta) + 43*func(ab(2)-2*delta) + &
-        & 49*func(ab(1)+3*delta) + 49*func(ab(2)-3*delta) )*delta/48.0
-        
-        n = floor((ab(2) - ab(1))/delta) 
+        n = floor((ab(2) - ab(1))/(delta*3))*3
+	delta = (ab(2) - ab(1)) / n
+
+	if (mod(n,3) /= 0) then !! <---
+	    write(*,*) "Error: n must be multiple of 3"
+	    stop
+	end if !! <---
+
+        allocate(self%Integral(1)) !! this accumulates
+
+        self%Integral(1) = func(ab(1)) + func(ab(2)) !! f(x_0)
 
         xi = ab(1)
 
-        Do i = 4, n-4, 1 ! i follow odd numbers  
+        Do i = 1, n-1, 1
 
-            xi = ab(1) + delta*i
+	    xi = xi + delta
+ 
+	    if (mod(i, 3) == 0) then
+	            self%Integral(1) = self%Integral(1)+ 2.0*func( xi ) !! f(x_(2*i-1))
+	    else
+                    self%Integral(1) = self%Integral(1) + 3.0*func( xi ) !! f(x_(2*i-1))		
+	    endif
 
-            self%Integral = self%Integral + func(xi)*delta
+        End do !! i = n-1 =>
 
-        End do
+        self%Integral(1) = (self%Integral(1))*3.0*delta/8.0
 
-        write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral
+        write(*,'(A)') "Here is Simpsons Method 3/8"
+        write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral(1)
 
-    else if (type == '1/8') Then
-
-        write(*,'(A, F20.10)') "Simpsons Method 1/8 (it's a lie, I didn't code this)"
-
-
-        self%Integral = (17.0*func(ab(1)) +17.0*func(ab(2)) + &
-        & 59*func(ab(1)+delta) +59*func(ab(2)-delta) + &
-        & 43*func(ab(1)+2*delta) + 43*func(ab(2)-2*delta) + &
-        & 49*func(ab(1)+3*delta) + 49*func(ab(2)-3*delta) )*delta/48.0
-        
-        n = floor((ab(2) - ab(1))/delta) 
-
-        xi = ab(1)
-
-        Do i = 4, n-4, 1 ! i follow odd numbers  
-
-            xi = ab(1) + delta*i
-
-            self%Integral = self%Integral + func(xi)*delta
-
-        End do
-
-        write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral
-
-    end if
+    endif !! <---
 
 End Subroutine Simpson_Method
 
@@ -201,20 +205,26 @@ Subroutine RK2_Method(self, func, ab, delta, alpha_input)
         delta = 1.0e-4_real64
     endif
 
-    self%Integral = func(ab(1))
     n = floor((ab(2) - ab(1)) / delta)
     xi = ab(1)
-    yi = self%Integral
 
-    do i = 1, n, 1
+    allocate(self%Integral(n)) !! this accumulates
+    self%Integral(1) = func(ab(1))
+    yi = self%Integral(1)
+
+    do i = 2, n, 1
+
         k1 = func(xi)
-        k2 = func(xi + (1 - 1 / (2 * alpha)) * delta)
-        xi = ab(1) + i * delta
-        self%Integral = yi + delta * ((1 - 1 / (2 * alpha)) * k1 + 1 / (2 * alpha) * k2)
-        yi = self%Integral
+        k2 = func(xi + alpha * delta)
+        xi = xi + delta
+	yi = yi + delta * ( ((1.0 - 1.0/(2.0*alpha)) * k1) + &
+	                    ( (1.0/(2.0*alpha)) * k2) )
+
+	self%Integral(i) = yi
+
     end do
 
-    write(*, '(A, F20.10)') "Numerical Integration: ", self%Integral
+    write(*, '(A, F20.10)') "Numerical Integration: ", self%Integral(n)
 
 End Subroutine RK2_Method
 
@@ -231,22 +241,32 @@ Subroutine RK4_Method(self, func, ab, delta, y0)
         delta = 1.0e-4_real64
     endif
 
-    self%Integral = func(ab(1))
     n = floor((ab(2) - ab(1)) / delta)
+
+    allocate(self%Integral(n)) !! this accumulates
+
     xi = ab(1)
     yi = y0
 
-    do i = 1, n, 1
+    k1 = func(xi, yi)
+    k2 = func(xi + 0.5 * delta, yi + 0.5 * delta * k1)
+    k3 = func(xi + 0.5 * delta, yi + 0.5 * delta * k2)
+    k4 = func(xi + delta, yi + delta * k3)
+
+    yi = yi +  (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+    self%Integral(1) = yi
+
+    do i = 2, n, 1
+        xi = xi + delta
         k1 = func(xi, yi)
         k2 = func(xi + 0.5 * delta, yi + 0.5 * delta * k1)
         k3 = func(xi + 0.5 * delta, yi + 0.5 * delta * k2)
         k4 = func(xi + delta, yi + delta * k3)
-
-        xi = ab(1) + i * delta
-        self%Integral = self%Integral + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+        yi = yi +  (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+        self%Integral(i) = yi
     end do
 
-    write(*, '(A, F20.10)') "Numerical Integration: ", self%Integral
+    write(*, '(A, F20.10)') "Numerical Integration: ", self%Integral(n)
 
 End Subroutine RK4_Method
 
@@ -264,59 +284,83 @@ subroutine Fixed_Point_Method(func, xi, xj, max_tolerance)
     tolerance = abs(xj - xi)
     
     do while (tolerance > max_tolerance)
+	if (abs(xi) < 1.0e-10_real64) then
+	    print *, "xi is too small, risk of zero division, __Fixed_Point_Method__"
+	    stop
+	end if
         tolerance = abs((xj - xi)/xi)
-        print*,xi,xj
         xi = xj
         xj = func(xi)
         i = i + 1
     end do
+
 End subroutine Fixed_Point_Method
 
-subroutine NewtonRapson(func, xi, xj, max_tolerance, delta) 
+subroutine NewtonRaphson(func, xi, delta, maxt, yi)
 
-    type(Derivative):: Flux
-    integer :: i
-    real(kind=real64), intent(inout) :: max_tolerance, xi 
-    real(kind=real64), intent(out) :: xj
-    real(kind=real64), external :: func
-    real(kind=real64), optional, intent(in out) :: delta
-    real(kind=real64) :: dfdx, tolerance ! j = i+1
+        !! func must be f(x,y)
+        real(kind=real64), intent(inout) :: xi, delta
+        real(kind=real64), intent(in), optional :: yi
+        real(kind=real64), external :: func
+        real(kind=real64), intent(in) :: maxt
+        real(kind=real64) :: y, dfdx, cond = 0.0
+        integer :: i = 0
 
-    if (delta <= 0.0_real64) then
-        delta = 1.0e-4_real64
-    endif
-
-    i = 0
-
-    call Flux%Diff(func, xi, delta, dfdx)
-    xj = xi + func(xi)/dfdx
-    tolerance = abs(xj - xi)
-    do while (tolerance > max_tolerance)
-        call Flux%Diff(func, xi, delta, dfdx)
-        xj = xi + func(xi)/dfdx
-        tolerance = abs(xj - xi)
-        if (dfdx < 1.0e-10_real64) then
-            print *, "derivative too small, stopping iteration"
-            return
+        if (delta <= 0.0_real64) then
+                delta = 1.0e-4_real64
         endif
-        xi = xj
-        i = i + 1
-    end do
 
-End subroutine NewtonRapson
+        if (present(yi)) then
+            y = yi
+        else
+            y = 0.0  ! default value
+        end if
+
+        do while ((abs(cond) > maxt) .and. (i<1000))
+            !! eval x_n+1 = x_n - f(x,y)/f'(x,y)
+            !! normally, y is just a parameters
+            dfdx = qdiff(func, xi, y, delta)
+            if (abs(dfdx) < 1.0e-10_real64) then
+                print*, "derivative too small, stopping..."
+                stop
+            endif
+            cond = func(xi,y)
+
+            if (abs(cond) > 1.0e10_real64) exit
+
+            xi = xi - cond/dfdx
+
+            i = i + 1
+        end do
+
+contains
+
+    function qdiff(f, x, y, delta) result(Dx)
+
+    real(kind=real64), external :: f
+    real(kind=real64), intent(in) :: x, y, delta
+    real(kind=real64) :: Dx
+
+    Dx = (f(x + delta,y) - f(x,y))/delta
+
+    end function
+
+End subroutine NewtonRaphson
 
 Subroutine Implicit_RK2(self, func, ab, delta, y0)
-    class(Integrate), intent(in out) :: self
-    ! Implicit Euler
 
+    !!   Crank–Nicolson (implicit trapezoidal rule) with 
+    !!   fixed-point predictor
+
+    class(Integrate), intent(in out) :: self
     integer :: i, n
     real(kind=real64), intent(inout) :: delta, y0
     real(kind=real64), external :: func
     real(kind=real64), intent(in), dimension(2) :: ab
-    real(kind=real64) :: tolerance = 1.0e-2_real32
-    real(kind=real64) :: xi, yi, k1, k2, o
+    real(kind=real64) :: tolerance = 1.0e-2_real64
+    real(kind=real64) :: xi, yi, k1, k2, yi_star
 
-    if (delta == 0.0_real64) then
+    if (abs(delta) < 1.0e-10_real64) then
         delta = 1.0e-6_real64
     endif
 
@@ -328,28 +372,30 @@ Subroutine Implicit_RK2(self, func, ab, delta, y0)
     yi = y0
 
     !! initialize integral result
+    allocate(self%Integral(n))
+    self%Integral(1) = y0
 
-    self%Integral = 0.0
     do i = 1, n, 1
 
         k1 = func(xi, yi)
 
-        !o = yi + k2*delta => k2 = (o - yi )/delta
-	o = xi + delta
+        yi_star = imp_euler_fixed_point(func, xi + delta, yi, tolerance, delta)
 
-        k2 = imp_euler_fixed_point(func, o, yi, tolerance, delta)
-        k2 = (k2 - yi)/delta
+        !k2 = (yi_star - yi)/delta
+	k2 = func(xi + delta, yi_star)
 
-        xi = ab(1) + i * delta
+        xi = xi + delta
+
         yi = yi + delta * (k1 + k2)/2
 
-       self%Integral = self%Integral + yi * delta
+	self%Integral(i) =  yi
+
     end do
 
     contains
 
     function imp_euler_fixed_point(func, xi, yi, max_tolerance, delta) result(yj)
-        real(kind=real64), intent(inout) :: xi, yi, delta
+        real(kind=real64), intent(in) :: xi, yi, delta
         real(kind=real64), intent(in) :: max_tolerance
         real(kind=real64), external :: func
         real(kind=real64) :: tolerance
@@ -369,7 +415,7 @@ Subroutine Implicit_RK2(self, func, ab, delta, y0)
 
         tolerance = abs((yj - aux_yi) / aux_yi)
 
-        do while (tolerance > max_tolerance)
+        do while ((tolerance > max_tolerance) .and. (i<1000))
             aux_yi = yj
             yj = func(xi, aux_yi) * delta + res0
             tolerance = abs((yj - aux_yi) / aux_yi)
@@ -379,6 +425,129 @@ Subroutine Implicit_RK2(self, func, ab, delta, y0)
     end function imp_euler_fixed_point
 
 End Subroutine Implicit_RK2
+
+Subroutine GaussLegendre(self, func, ab, delta, y0)
+
+    !!class(Derivative) :: f
+    class(Integrate), intent(in out) :: self
+    integer :: i, n, j
+    real(kind=real64), intent(inout) :: delta, y0
+    real(kind=real64), external :: func
+    real(kind=real64), intent(in), dimension(2) :: ab
+    real(kind=real64), dimension(2):: c, K, X1, X2, FNC
+    real(kind=real64), dimension(2):: b
+    real(kind=real64), dimension(2,2):: GL, Jb, Jinv
+    real(kind=real64) :: tolerance = 1.0e-2_real64
+    real(kind=real64) :: xi, yi, k1, k2
+    real(kind=real64) :: k2_star, k1_star, tol = 1.0e-8_real64
+    real(kind=real64) :: det = 0, sqrt36 = sqrt(3.0_real64)/6.0_real64, norma = 0.0_real64 
+
+    !! Butcher Tableu
+    c(:) = [ 0.5 - sqrt36,  0.5 + sqrt36]
+    c(:) = [ 0.5         , 0.5 ]
+
+    GL(1,1) = 0.25
+    GL(1,2) = 0.25 - sqrt36
+    GL(2,2) = 0.25 
+    GL(2,2) = 0.25 + sqrt36
+
+    if (abs(delta) < 1.0e-10_real64) delta = 1.0e-6_real64
+
+    !! Aproximate number of steps
+    n = floor((ab(2) - ab(1)) / delta)
+
+    !! Initial Values
+    xi = ab(1)
+    yi = y0
+
+    K(:) = [func(xi, yi), func(xi, yi)]
+
+    X1(:) = [xi + c(1)*delta, yi + delta*(GL(1,1)*K(1) + GL(1,2)*K(2))]
+    X2(:) = [xi + c(2)*delta, yi + delta*(GL(2,1)*K(1) + GL(2,2)*K(2))]
+
+    Jb(1,:) = [1 - delta*GL(1,1)*qdiff(func, X1(1), X1(2),delta),  - delta*GL(1,2)*qdiff(func, X1(1), X1(2), delta) ]
+    Jb(2,:) = [ - delta*GL(2,1)*qdiff(func, X2(1), X2(2),delta), 1 - delta*GL(2,2)*qdiff(func, X2(1), X2(2),delta) ]
+    
+   det = Jb(1,1)*Jb(2,2) - Jb(1,2)*Jb(2,1)
+ 
+   if (abs(det) < 1.0d-14) then
+      print *, "Matrix is singular or nearly singular"
+      stop
+   end if
+
+   !! initialize integral result
+   allocate(self%Integral(n))
+   self%Integral(1) = y0
+
+   Jinv(1,1) =  Jb(2,2) / det
+   Jinv(1,2) = -Jb(1,2) / det
+   Jinv(2,1) = -Jb(2,1) / det
+   Jinv(2,2) =  Jb(1,1) / det
+
+   FNC(1) = K(1) - func(X1(1), X1(2))
+   FNC(2) = K(2) - func(X2(1), X2(2))
+   K = K - matmul(Jinv, FNC)
+   norma = sqrt(FNC(1)*FNC(1) + FNC(2)*FNC(2))
+   
+    do i = 1, n, 1
+
+        K(:) = [func(xi, yi), func(xi, yi)]
+        norma = 1.0d0
+        j = 1
+
+        do while ((norma > tol) .and. (j<1000))
+
+                X1(:) = [xi + c(1)*delta, yi + delta*(GL(1,1)*K(1) + GL(1,2)*K(2))]
+                X2(:) = [xi + c(2)*delta, yi + delta*(GL(2,1)*K(1) + GL(2,2)*K(2))]
+
+                Jb(1,:) = [1 - delta*GL(1,1)*qdiff(func, X1(1), X1(2), delta), &
+                - delta*GL(1,2)*qdiff(func, X1(1), X1(2),delta) ]
+                Jb(2,:) = [ - delta*GL(2,1)*qdiff(func, X2(1), X2(2),delta), &
+                1 - delta*GL(2,2)*qdiff(func, X2(1), X2(2),delta) ]
+
+                det = Jb(1,1)*Jb(2,2) - Jb(1,2)*Jb(2,1)
+
+                if (abs(det) < 1.0d-14) then
+                        print *, "Matrix is singular or nearly singular"
+                        stop
+                end if
+
+                Jinv(1,1) =  Jb(2,2) / det
+                Jinv(1,2) = -Jb(1,2) / det
+                Jinv(2,1) = -Jb(2,1) / det
+                Jinv(2,2) =  Jb(1,1) / det
+
+                FNC(1) = K(1) - func(X1(1), X1(2))
+                FNC(2) = K(2) - func(X2(1), X2(2))
+                
+                K = K - matmul(Jinv, FNC)
+                norma = sqrt(FNC(1)*FNC(1) + FNC(2)*FNC(2))
+                j = j + 1
+        end do
+        !! the loop ends and we have K
+        k1 = K(1)
+        k2 = K(2)
+
+        xi = xi + delta
+        yi = yi + delta * (k1 + k2)/2
+
+        self%Integral(i) =  yi
+
+    end do
+
+    contains
+
+    function qdiff(f, x, y, delta) result(Dx)
+
+    real(kind=real64), external :: f
+    real(kind=real64), intent(in) :: x, y, delta
+    real(kind=real64) :: Dx
+
+    Dx = (f(x + delta,y) - f(x,y))/delta
+
+    end function
+
+End subroutine GaussLegendre
 
 Subroutine Adaptive_RK4(self, func, ab, delta, y0)
 
@@ -394,8 +563,9 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
     real(kind=real64) :: epsilon = 1.0e-6_real64
     real(kind=real64) :: q = 1.0
 
-    self%Integral = 0
     n = floor((ab(2) - ab(1)) / delta)
+    allocate(self%Integral(n))
+    self%Integral(n) = 0
     xi = ab(1)
     yi = y0
 
@@ -438,9 +608,7 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
         xi = xi + delta
         yi = yhalf + variation/15.0_real64
 
-	!print*, epsilon, delta
-
-        self%Integral = self%integral +  yi*delta
+        self%Integral(n) = self%Integral(n-1) +  yi*delta
         delta = q*delta
 
     end do
