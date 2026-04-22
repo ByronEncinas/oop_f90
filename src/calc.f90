@@ -113,10 +113,10 @@ Subroutine Simpson_Method(self, func, ab, type, delta)
 
         write(*,'(I0)') n
 
-	xi = ab(1)
+    xi = ab(1)
         xj = ab(1)
         xk = ab(1)
-	i = 1
+    i = 1
         j = 2*i-1
         k = 2*i
         xj = xj + delta*j ! odds
@@ -124,9 +124,9 @@ Subroutine Simpson_Method(self, func, ab, type, delta)
 
         Do i = 2, n-1, 1   
 
-	    self%Integral(i) = self%Integral(i-1) &
-			+ 4*func( xj )*delta/3.0 & !! f(x_(2*i-1))
-			+ 2*func( xk )*delta/3.0   !! f(x_(2*i)) 
+        self%Integral(i) = self%Integral(i-1) &
+            + 4*func( xj )*delta/3.0 & !! f(x_(2*i-1))
+            + 2*func( xk )*delta/3.0   !! f(x_(2*i)) 
             j = 2*i-1
             k = 2*i
             xj = ab(1) + delta*j ! odds
@@ -134,13 +134,13 @@ Subroutine Simpson_Method(self, func, ab, type, delta)
 
         End do
 
-	self%Integral(n) = self%Integral(n-1)                 &
-	    + 4*func(xj)*delta/3.0                            &  ! 4f(x_5)
-	    + 2*func(xk)*delta/3.0                            &  ! 2f(x_6)
-	    + 4*func(ab(1) + (2*n-1)*delta)*delta/3.0         &  ! 4f(x_7)
-	    + func(ab(2))*delta/3.0    
+    self%Integral(n) = self%Integral(n-1)                 &
+        + 4*func(xj)*delta/3.0                            &  ! 4f(x_5)
+        + 2*func(xk)*delta/3.0                            &  ! 2f(x_6)
+        + 4*func(ab(1) + (2*n-1)*delta)*delta/3.0         &  ! 4f(x_7)
+        + func(ab(2))*delta/3.0    
 
-	write(*,'(A)') "Here is Simpsons Method 1/3"
+    write(*,'(A)') "Here is Simpsons Method 1/3"
         write(*,'(A, F20.10)') "Numerical Integration: ",self%Integral(n)
 
     else if (type == '3/8') Then !! <---
@@ -148,12 +148,12 @@ Subroutine Simpson_Method(self, func, ab, type, delta)
         write(*,'(A, F20.10)') "Here is Simpsons Method 3/8"
 
         n = floor((ab(2) - ab(1))/(delta*3))*3
-	delta = (ab(2) - ab(1)) / n
+    delta = (ab(2) - ab(1)) / n
 
-	if (mod(n,3) /= 0) then !! <---
-	    write(*,*) "Error: n must be multiple of 3"
-	    stop
-	end if !! <---
+    if (mod(n,3) /= 0) then !! <---
+        write(*,*) "Error: n must be multiple of 3"
+        stop
+    end if !! <---
 
         allocate(self%Integral(1)) !! this accumulates
 
@@ -163,13 +163,13 @@ Subroutine Simpson_Method(self, func, ab, type, delta)
 
         Do i = 1, n-1, 1
 
-	    xi = xi + delta
+        xi = xi + delta
  
-	    if (mod(i, 3) == 0) then
-	            self%Integral(1) = self%Integral(1)+ 2.0*func( xi ) !! f(x_(2*i-1))
-	    else
-                    self%Integral(1) = self%Integral(1) + 3.0*func( xi ) !! f(x_(2*i-1))		
-	    endif
+        if (mod(i, 3) == 0) then
+                self%Integral(1) = self%Integral(1)+ 2.0*func( xi ) !! f(x_(2*i-1))
+        else
+                    self%Integral(1) = self%Integral(1) + 3.0*func( xi ) !! f(x_(2*i-1))        
+        endif
 
         End do !! i = n-1 =>
 
@@ -217,10 +217,10 @@ Subroutine RK2_Method(self, func, ab, delta, alpha_input)
         k1 = func(xi)
         k2 = func(xi + alpha * delta)
         xi = xi + delta
-	yi = yi + delta * ( ((1.0 - 1.0/(2.0*alpha)) * k1) + &
-	                    ( (1.0/(2.0*alpha)) * k2) )
+    yi = yi + delta * ( ((1.0 - 1.0/(2.0*alpha)) * k1) + &
+                        ( (1.0/(2.0*alpha)) * k2) )
 
-	self%Integral(i) = yi
+    self%Integral(i) = yi
 
     end do
 
@@ -284,10 +284,10 @@ subroutine Fixed_Point_Method(func, xi, xj, max_tolerance)
     tolerance = abs(xj - xi)
     
     do while (tolerance > max_tolerance)
-	if (abs(xi) < 1.0e-10_real64) then
-	    print *, "xi is too small, risk of zero division, __Fixed_Point_Method__"
-	    stop
-	end if
+    if (abs(xi) < 1.0e-10_real64) then
+        print *, "xi is too small, risk of zero division, __Fixed_Point_Method__"
+        stop
+    end if
         tolerance = abs((xj - xi)/xi)
         xi = xj
         xj = func(xi)
@@ -382,13 +382,13 @@ Subroutine Implicit_RK2(self, func, ab, delta, y0)
         yi_star = imp_euler_fixed_point(func, xi + delta, yi, tolerance, delta)
 
         !k2 = (yi_star - yi)/delta
-	k2 = func(xi + delta, yi_star)
+    k2 = func(xi + delta, yi_star)
 
         xi = xi + delta
 
         yi = yi + delta * (k1 + k2)/2
 
-	self%Integral(i) =  yi
+    self%Integral(i) =  yi
 
     end do
 
@@ -402,13 +402,13 @@ Subroutine Implicit_RK2(self, func, ab, delta, y0)
         real(kind=real64) :: yj, res0, aux_yi
         integer :: i
 
-	aux_yi = yi
+    aux_yi = yi
 
-	if (aux_yi == 0.0_real64) then
-	    aux_yi = 1.0e-6_real64
-	endif
+    if (aux_yi == 0.0_real64) then
+        aux_yi = 1.0e-6_real64
+    endif
 
-	res0 = aux_yi
+    res0 = aux_yi
 
         i = 0
         yj = func(xi, aux_yi) * delta + res0
@@ -570,21 +570,21 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
     yi = y0
 
     do while (xi <= ab(2))
-	
+    
         k1 = func(xi, yi)
         k2 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k1)
         k3 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k2)
         k4 = func(xi + 0.5 * delta, yi + 0.5 * delta * k3)
 
         xhalf = xi + delta/2
-	yhalf = yi + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+    yhalf = yi + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
 
         k1 = func(xhalf, yhalf)
         k2 = func(xhalf + 0.5 * 0.5 * delta, yhalf + 0.5 * 0.5 * delta * k1)
         k3 = func(xhalf + 0.5 * 0.5 * delta, yhalf + 0.5 * 0.5 * delta * k2)
         k4 = func(xhalf + 0.5 * delta, yhalf + 0.5 * delta * k3)
 
-	!!xhalf = xi + delta/2
+    !!xhalf = xi + delta/2
         yhalf = yhalf + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
 
         k1 = func(xi, yi)
@@ -593,17 +593,17 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
         k4 = func(xi + delta, yi + delta * k3)
 
         !!xstep = xi + delta
-	ystep = yi + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+    ystep = yi + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
 
-	variation = (yhalf - ystep)
+    variation = (yhalf - ystep)
 
-	q = 0.9_real64*(epsilon / abs(variation))**(0.25_real64)	
-	q = min(5.0_real64, max(q, 0.1_real64))	
+    q = 0.9_real64*(epsilon / abs(variation))**(0.25_real64)    
+    q = min(5.0_real64, max(q, 0.1_real64)) 
 
-	if (abs(variation) > epsilon) then
-		delta = q*delta
-		cycle
-	endif
+    if (abs(variation) > epsilon) then
+        delta = q*delta
+        cycle
+    endif
 
         xi = xi + delta
         yi = yhalf + variation/15.0_real64
@@ -620,10 +620,10 @@ Subroutine nbody(func, ab, delta, s, tf)
         real(real64), intent(in), dimension(12) :: s
         real(real64), intent(in), dimension(2) :: ab
         real(real64), intent(in) :: delta, tf
-	real(kind=real64) :: x1, y1, x2, y2, x3, y3
+    real(kind=real64) :: x1, y1, x2, y2, x3, y3
         real(kind=real64) :: vx1, vy1, vx2, vy2, vx3, vy3
         real(real64), external :: func
-	!! i just need a way to take on the func as realiably as possible
+    !! i just need a way to take on the func as realiably as possible
 
 
 
