@@ -92,7 +92,8 @@ contains
     end subroutine levi_civita
 
     recursive function recursive_determinant(M, dim) result(deter)
-        integer :: i, j, dim
+        integer :: i, j
+	integer, intent(in) :: dim
         real(kind=real64) :: deter
         real(kind=real64) :: minor_deter
         real(kind=real64), dimension(:,:), intent(in) :: M 
@@ -126,24 +127,18 @@ contains
         integer, intent(in) :: dim, j
         real(kind=real64), dimension(:,:), intent(in) :: M
         real(kind=real64), dimension(:,:), intent(out) :: cof
-        integer :: i, k
+        integer :: i, k, ii, kk
         
         ! removing row 1 and column j
+	ii = 0
         do i = 1, dim
-            if (i==1)then
-                cycle
-            endif
-            ! for dim = 3
-            ! if j = 1, then k = 2, 3
-            ! if j = 2, then k = 3, 1
-            ! if j = 3, then k = 1, 2
+            if (i == 1)cycle
+	    ii = ii + 1
+	    kk = 0
             do k = 1, dim
-                ! Skip the j-th column and first row
-                if (k < j)then
-                    cof(i-1, k) = M(i, k)
-                elseif (k > j) then
-                    cof(i-1, k-1) = M(i, k)
-                end if
+		if (k == j) cycle
+		kk = kk + 1
+                cof(ii, kk) = M(i, k)
             end do
         end do
 

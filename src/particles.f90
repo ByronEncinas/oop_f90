@@ -1,7 +1,7 @@
 module particles
 
     use iso_fortran_env, only: real64, real128
-
+    use constants
     implicit none
 
     private
@@ -23,6 +23,8 @@ module particles
     public :: three_body
 
 contains
+
+
     subroutine init(self, name, mass, charge, position, velocity)
 
         class(Particle), intent(in out) :: self
@@ -47,6 +49,22 @@ contains
         displacement_vector = new_position - self%position
 
     end subroutine displacement
+
+    function efield(self, pos)result(ef)
+
+        class(Particle), intent(in out) :: self
+        real(kind=real64), intent(in), dimension(3) :: pos
+        real(kind=real64), dimension(3) :: rel_pos
+        real(kind=real64) :: ef, norm, epsilon = 1.0e-12_real64
+        !! position must be initialized
+        !! softened potential
+
+        rel_pos = pos - self%position
+        norm = sqrt(rel_pos(1)*rel_pos(1) + rel_pos(2)*rel_pos(2) +&
+			 rel_pos(3)*rel_pos(3))
+        ef = self%charge/(norm*norm*norm)
+
+    end function efield
 
     subroutine three_body(interaction, p1, p2, p3, tf)
 

@@ -18,7 +18,8 @@ program main
 
     ab(1) = 0.0_real64
     ab(2) = 1.0_real64
-    delta = 1.0e-4_real64
+
+    delta = 1.0e-6_real64
 
     t = ab(2)
 
@@ -28,7 +29,7 @@ program main
     print*, "Array Size: ", size(sol%Integral)
     print *, "Implicit Runge Kutta O2 Integral  = ", sol%Integral(nm)
     deallocate(sol%Integral)
-
+    delta = 1.0e-6_real64
     call sol%AdpRKO4(stiff, ab, delta, y0)
 
     nm = size(sol%Integral)

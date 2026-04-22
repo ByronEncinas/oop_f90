@@ -1,10 +1,9 @@
 Module calculus
 
     use iso_fortran_env, only: real32, real64, real128
-    implicit none
+    use particles
 
-    public :: Fixed_Point_Method
-    public :: nbody
+    implicit none
 
     private
 
@@ -20,12 +19,12 @@ Module calculus
     !private
         real(kind=real64), dimension(:), allocatable :: Integral
     contains
-        procedure :: Euler    => Euler_Method
-        procedure :: Simpson  => Simpson_Method
-        procedure :: RK2      => RK2_Method         
-        procedure :: RK4      => RK4_Method         
-        procedure :: ImpRKO2  => Implicit_RK2
-        procedure :: AdpRKO4  => Adaptive_RK4
+        procedure :: Euler    => Euler_Method  !! EULER
+        procedure :: Simpson  => Simpson_Method!! SM8
+        procedure :: RK2      => RK2_Method    !! RK2     
+        procedure :: RK4      => RK4_Method    !! RK4
+        procedure :: ImpRKO2  => Implicit_RK2  !! IRKO2
+        procedure :: AdpRKO4  => Adaptive_RK4  !! ARKO2
     end type Integrate
 
 contains
@@ -404,7 +403,7 @@ Subroutine Implicit_RK2(self, func, ab, delta, y0)
 
     aux_yi = yi
 
-    if (aux_yi == 0.0_real64) then
+    if (abs(yi) < 1.0e-12_real64) then
         aux_yi = 1.0e-6_real64
     endif
 
@@ -552,81 +551,124 @@ End subroutine GaussLegendre
 Subroutine Adaptive_RK4(self, func, ab, delta, y0)
 
     class(Integrate), intent(in out) :: self
-    integer :: i, n
     real(kind=real64), intent(inout) :: delta
     real(kind=real64), intent(in) :: y0
     real(kind=real64), external :: func
     real(kind=real64), intent(in), dimension(2) :: ab
     real(kind=real64) :: xi, yi, k1, k2, k3, k4, yj, xj
-    real(kind=real64) :: ystep, yhalf, xhalf, xstep
-    real(kind=real64) :: variation
-    real(kind=real64) :: epsilon = 1.0e-6_real64
+    real(kind=real64) :: ystep, yhalf, xhalf, xstep, yhh, yf
+    real(kind=real64) :: variation, delta2, err
+    real(kind=real64) :: epsilon = 1.0e-12_real64
     real(kind=real64) :: q = 1.0
+    real(kind=real64), dimension(:), allocatable :: aux
+    integer:: n, os, alloc_err = 0, i = 1
 
     n = floor((ab(2) - ab(1)) / delta)
-    allocate(self%Integral(n))
-    self%Integral(n) = 0
+    allocate(self%Integral(n), stat=alloc_err)
+    if (alloc_err /= 0) stop "Allocation failed"
+    self%Integral(i) = y0
     xi = ab(1)
     yi = y0
 
     do while (xi <= ab(2))
-    
-        k1 = func(xi, yi)
-        k2 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k1)
-        k3 = func(xi + 0.5 * 0.5 * delta, yi + 0.5 * 0.5 * delta * k2)
-        k4 = func(xi + 0.5 * delta, yi + 0.5 * delta * k3)
 
-        xhalf = xi + delta/2
-    yhalf = yi + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
-
-        k1 = func(xhalf, yhalf)
-        k2 = func(xhalf + 0.5 * 0.5 * delta, yhalf + 0.5 * 0.5 * delta * k1)
-        k3 = func(xhalf + 0.5 * 0.5 * delta, yhalf + 0.5 * 0.5 * delta * k2)
-        k4 = func(xhalf + 0.5 * delta, yhalf + 0.5 * delta * k3)
-
-    !!xhalf = xi + delta/2
-        yhalf = yhalf + (1.0 / 6.0) * 0.5 * delta * (k1 + 2 * k2 + 2 * k3 + k4)
-
+        !! one full step
         k1 = func(xi, yi)
         k2 = func(xi + 0.5 * delta, yi + 0.5 * delta * k1)
         k3 = func(xi + 0.5 * delta, yi + 0.5 * delta * k2)
-        k4 = func(xi + delta, yi + delta * k3)
+        k4 = func(xi +       delta, yi +  delta * k3)
 
-        !!xstep = xi + delta
-    ystep = yi + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
+        yf = yi + (1.0 / 6.0) * delta * (k1 + 2 * k2 + 2 * k3 + k4)
 
-    variation = (yhalf - ystep)
+        !! two half steps    
+        k1 = func(xi, yi)
+        k2 = func(xi + 0.25 * delta, yi + 0.25 * delta * k1)
+        k3 = func(xi + 0.25 * delta, yi + 0.25 * delta * k2)
+        k4 = func(xi + 0.50 * delta, yi + 0.50 * delta * k3)
+        
+        xhalf = xi + delta * 0.5
+        yhalf = yi + (1.0 / 6.0) * 0.5 * delta * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+        
+        k1 = func(xhalf, yhalf)
+        k2 = func(xhalf + 0.25 * delta, yhalf + 0.25 * delta * k1)
+        k3 = func(xhalf + 0.25 * delta, yhalf + 0.25 * delta * k2)
+        k4 = func(xhalf + 0.50 * delta, yhalf + 0.50 * delta * k3)
 
-    q = 0.9_real64*(epsilon / abs(variation))**(0.25_real64)    
-    q = min(5.0_real64, max(q, 0.1_real64)) 
+        yhh = yhalf + (1.0 / 6.0) * 0.5 * delta * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
-    if (abs(variation) > epsilon) then
-        delta = q*delta
-        cycle
-    endif
+        err = yhh - yf
 
+        ystep = yhh + err/15.0
+
+        if (abs(err) < epsilon) err = 1.0e-14_real64
+
+        q = 0.9_real64*(epsilon/abs(err))**(0.25_real64)
+        q = min(5.0_real64, max(q, 0.1_real64)) 
+
+        err = max(abs(err), 1.0e-14_real64)
+
+        if ((abs(err) > epsilon)) then
+                delta = q*delta
+                cycle
+        endif
         xi = xi + delta
-        yi = yhalf + variation/15.0_real64
+        !!delta = q*delta
+        delta = min(q * delta, 0.028_real64)
+        
 
-        self%Integral(n) = self%Integral(n-1) +  yi*delta
-        delta = q*delta
-
+        if (i + 1 >= n) then
+                allocate(aux(n), stat=alloc_err)
+                if (alloc_err /= 0) stop "Allocation failed"
+                aux(1:n) = self%Integral(1:n)
+                deallocate(self%Integral)
+                os = n  
+                n = 2*n
+                allocate(self%Integral(n), stat=alloc_err)
+                if (alloc_err /= 0) stop "Allocation failed"
+                self%Integral(1:os) = aux(1:os)
+                self%Integral(os+1:n) = 0.0_real64
+                deallocate(aux)
+        endif
+        self%Integral(i) = yi
+        yi = ystep
+        i  = i + 1
     end do
+
+    allocate(aux(i-1), stat=alloc_err)
+    if (alloc_err /= 0) stop "Allocation failed"
+    aux(1:i-1) = self%Integral(1:i-1)
+    deallocate(self%Integral)
+    allocate(self%Integral(i-1), stat=alloc_err)
+    if (alloc_err /= 0) stop "Allocation failed"
+    self%Integral(1:i-1) = aux(1:i-1)
+    deallocate(aux)
 
 End Subroutine Adaptive_RK4
 
-Subroutine nbody(func, ab, delta, s, tf)
+subroutine solivp(ode, t_span, y0, rtol, atol, sol)
 
-        real(real64), intent(in), dimension(12) :: s
-        real(real64), intent(in), dimension(2) :: ab
-        real(real64), intent(in) :: delta, tf
-    real(kind=real64) :: x1, y1, x2, y2, x3, y3
-        real(kind=real64) :: vx1, vy1, vx2, vy2, vx3, vy3
-        real(real64), external :: func
-    !! i just need a way to take on the func as realiably as possible
+    real(kind=real64), intent(inout) :: sol
+    real(kind=real64), intent(in) :: y0, rtol, atol, t_span
+    real(kind=real64), external :: ode
+    integer :: order 
 
+    if (order > 2) then
+        print*, "wrong method: this is made for ODEs of order below or equal 2"
+        stop
+    endif
 
+    !! I have in mind the three body problem, so GaussLegendre will be used
+    !!    y0 contains the initial values
 
-End Subroutine nbody
+    contains
+
+	subroutine dSdt(t, y0s, order, sop)
+
+	        real(kind=real64), intent(in), dimension(:) :: y0s
+	real(kind=real64), intent(in) :: t, order, sop
+
+	end subroutine dSdt
+
+End subroutine solivp
 
 End Module calculus

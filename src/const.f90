@@ -1,4 +1,4 @@
-Module consts
+Module constants
     
 	use iso_fortran_env, only: real64, real128
 
@@ -13,4 +13,4 @@ Module consts
         real(real64), parameter :: qe_si = 1.6021766634e-19_real64
         real(real64), parameter :: me_si = 9.109383713928e-31_real64
 
-End Module consts
+End Module constants

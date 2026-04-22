@@ -1,6 +1,6 @@
 module oopf
 
-        use consts
+        use constants
         use particles
         use calculus
         use environment
