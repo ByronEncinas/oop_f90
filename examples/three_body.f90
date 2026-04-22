@@ -50,10 +50,5 @@ program three_body
         !! There is a N-body problem solver in the particles.f90 that uses several 
         !! methods from calculus.f90
 
-	!! t0 is implicitly equal to 0
-	!!
-	call nbody(p1, p2, p3, tf)
-
-        
-
+	!! t0 is implicitly equal to 0       
 end program three_body

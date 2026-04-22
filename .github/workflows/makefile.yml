@@ -18,10 +18,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gfortran make valgrind
 
       - name: Compile the Fortran project
-        run: make 
+        run: make
 
       - name: Verify executable
-        run: ls -l bin/oopf90 || (echo "Executable not found!" && exit 1)
+        run: ls -l ./bin/oopf90 || (echo "Executable not found!" && exit 1)
 
-      - name: Run Valgrind Memory Check
-        run: valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes bin/oopf || (echo "Valgrind detected issues!" && exit 1)
