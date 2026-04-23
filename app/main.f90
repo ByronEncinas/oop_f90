@@ -1,7 +1,12 @@
 program main
 
     use iso_fortran_env, only: real32,real64,real128
-    use oopf
+
+    use constants
+    use particles
+    use calculus
+    use environment
+    use linalg
 
     implicit none
 
