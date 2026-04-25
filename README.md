@@ -1,22 +1,17 @@
-# OOP-F90 (Library for Numerical Methods)
+# OOP-F90 (Simulation Library and Numerical Methods)
 
-I want to practice mathematical methods and I also don't want to forget FORTRAN (although I am married to the version after 1990). Right now, I am interested in the Calculus objects.
+I want to practice mathematical methods and I also don't want to forget FORTRAN (although I am married to 
+the version after 1990). Right now, I am interested in the Calculus objects.
 
-The idea is that all the results from the method that take large population samples as input will be compatible with the input of all the Plotting functions as well.
+Simplify usage of each and every function
 
+## TODO (Goal is to make all subroutines needed to solve these problems)
 
-- [ ] Solver for systems of equations (3D)
-
-- [x] **Object Particle**: initialize(mass, init_pos, init_vel, charge, ...), displacement updates method
-
-- [x] **Object Calculus**: 
-  - [x] First Derivative, Second Derivative (Done)
-  - [x] Euler Method (Done)
-  - [x] Simpson's Method (1/3, 1/8, 3/8)
-  - [x] Implicit Runge Kutta Order 2 Method
-  - [x] Store all domain of integration in obj%integral as array
-  - [x] Adaptive Runge Kutta Order 4 Method (1/2) <- possible debugging needed
-
+- [ ] Stablish a simple plotting/animation flow
+- [ ] Grad Shafranov Equation
+- [ ] Fokker Planck Equation
+- [ ] Finite Difference Methods (1D/2D/3D) 
+- [ ] First Derivative, Second Derivative, and matrix representations
 
 # References
 ---
