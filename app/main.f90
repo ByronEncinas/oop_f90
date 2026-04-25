@@ -28,14 +28,14 @@ program main
 
     t = ab(2)
 
-    call sol%ImpRKO2(stiff, ab, delta, y0)
+    call sol%IRKO2(stiff, ab, delta, y0)
 
     nm = size(sol%Integral)
     print*, "Array Size: ", size(sol%Integral)
     print *, "Implicit Runge Kutta O2 Integral  = ", sol%Integral(nm)
     deallocate(sol%Integral)
     delta = 1.0e-6_real64
-    call sol%AdpRKO4(stiff, ab, delta, y0)
+    call sol%ARKO4(stiff, ab, delta, y0)
 
     nm = size(sol%Integral)
     print*, "Array Size: ", size(sol%Integral)
@@ -51,8 +51,7 @@ contains
         func = -y
     end function func
 
-
-! dy/dx = -1000*y + sin(x)
+    ! dy/dx = -100.0*(y - cos(x)) - sin(x)
 
     real(kind=real64) function stiff(x, y)
         real(kind=real64), intent(in) :: x, y

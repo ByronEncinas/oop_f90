@@ -7,7 +7,6 @@ Module calculus
     private
 
     type, public :: Derivative
-    !private
         real(kind=real64) :: Differential
     contains
         procedure :: Diff   => Deriv
@@ -15,15 +14,14 @@ Module calculus
     end type Derivative
 
     type, public :: Integrate
-    !private
         real(kind=real64), dimension(:), allocatable :: Integral
     contains
-        procedure :: Euler    => Euler_Method  !! EULER
-        procedure :: Simpson  => Simpson_Method!! SM8
-        procedure :: RK2      => RK2_Method    !! RK2     
-        procedure :: RK4      => RK4_Method    !! RK4
-        procedure :: ImpRKO2  => Implicit_RK2  !! IRKO2
-        procedure :: AdpRKO4  => Adaptive_RK4  !! ARKO2
+        procedure :: EUL    => Euler_Method   !! EUL
+        procedure :: SM8  => Simpson_Method !! SM8
+        procedure :: RK2      => RK2_Method     !! RK2     
+        procedure :: RK4      => RK4_Method     !! RK4
+        procedure :: IRKO2  => Implicit_RK2   !! IRKO2
+        procedure :: ARKO4  => Adaptive_RK4   !! ARKO2
     end type Integrate
 
 contains
@@ -644,30 +642,52 @@ Subroutine Adaptive_RK4(self, func, ab, delta, y0)
 
 End Subroutine Adaptive_RK4
 
-subroutine solivp(ode, t_span, y0, rtol, atol, sol)
+Subroutine DDop(DD, N, dx)
+    real(kind=real64), intent(in out), dimension(:,:) :: DD
+    real(kind=real64), intent(in out) :: dx
+    integer, intent(in out) :: N
+    integer :: i, j
 
-    real(kind=real64), intent(inout) :: sol
-    real(kind=real64), intent(in) :: y0, rtol, atol, t_span
-    real(kind=real64), external :: ode
-    integer :: order 
+        DD(:,:) = 0.0_real64
 
-    if (order > 2) then
-        print*, "wrong method: this is made for ODEs of order below or equal 2"
-        stop
-    endif
+        do i = 1, N, 1
+                do j = 1, N, 1
+                if (i == j) then
+                        DD(i, j) = -2.0_real64
+                else if (i == j + 1) then !! upper diagonal
+                        DD(i, j) = 1.0_real64
+                else if (i + 1 == j) then !! lower diagonal
+                        DD(i, j) = 1.0_real64
+                else
+                        cycle
+                endif
+                end do
+        end do
 
-    !! I have in mind the three body problem, so GaussLegendre will be used
-    !!    y0 contains the initial values
+        DD(:,:)   =  DD(:,:) / (dx*dx)
 
-    contains
+End Subroutine Dop
 
-	subroutine dSdt(t, y0s, order, sop)
+Subroutine Dop(D, N, dx)
+    real(kind=real64), intent(in out), dimension(:,:) :: D
+    real(kind=real64), intent(in out) :: dx
+    integer, intent(in out) :: N
+    integer :: i, j
 
-	        real(kind=real64), intent(in), dimension(:) :: y0s
-	real(kind=real64), intent(in) :: t, order, sop
+        D(:,:) = 0.0_real64
+        do i = 1, N, 1
+                do j = 1, N, 1
+                        if (i == j) cycle
+                        if (i == j + 1) then
+                                D(i, j) = - 1.0_real64
+                        endif
+                        if (i + 1 == j) then
+                                D(i, j) = 1.0_real64
+                        endif
+                end do
+        end do
 
-	end subroutine dSdt
-
-End subroutine solivp
+        D(:,:)   =  D(:,:) / (2.0_real64*dx)
+End Subroutine Dop
 
 End Module calculus

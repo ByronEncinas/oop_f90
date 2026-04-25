@@ -1,7 +1,14 @@
 # mod, o and executables
 *.o
 *.mod
-executables
+*.a
+./**/exec*
+
+# Markdown
+OOPF_MOD.md
 
 # remove main inside src
-/src/FortranSS.f90
+/tests/*
+/lib/
+/gists/
+./examples/Makefile
