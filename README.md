@@ -7,11 +7,15 @@ Simplify usage of each and every function
 
 ## TODO (Goal is to make all subroutines needed to solve these problems)
 
+
 - [ ] Stablish a simple plotting/animation flow
-- [ ] Grad Shafranov Equation
-- [ ] Fokker Planck Equation
 - [ ] Finite Difference Methods (1D/2D/3D) 
-- [ ] First Derivative, Second Derivative, and matrix representations
+- [ ] Implement a Simple Riemann Solver
+
+Equations to solve:
+
+- Grad Shafranov Equation
+- Fokker Planck Equation
 
 # References
 ---
